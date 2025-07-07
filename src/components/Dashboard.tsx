@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -20,12 +19,12 @@ export const Dashboard: React.FC = () => {
   const fetchApplications = async () => {
     try {
       const { data, error } = await supabase
-        .from('job_applications' as any)
+        .from('job_applications')
         .select('*')
         .order('application_date', { ascending: false });
 
       if (error) throw error;
-      setApplications(data || []);
+      setApplications((data || []) as JobApplication[]);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -61,7 +60,7 @@ export const Dashboard: React.FC = () => {
 
     try {
       const { error } = await supabase
-        .from('job_applications' as any)
+        .from('job_applications')
         .delete()
         .eq('id', id);
 

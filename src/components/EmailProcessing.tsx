@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -15,13 +14,13 @@ export const EmailProcessing: React.FC = () => {
   const fetchEmails = async () => {
     try {
       const { data, error } = await supabase
-        .from('emails' as any)
+        .from('emails')
         .select('*')
         .order('received_at', { ascending: false })
         .limit(10);
 
       if (error) throw error;
-      setEmails(data || []);
+      setEmails((data || []) as Email[]);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -34,13 +33,13 @@ export const EmailProcessing: React.FC = () => {
   const fetchProcessingResults = async () => {
     try {
       const { data, error } = await supabase
-        .from('email_processing_results' as any)
+        .from('email_processing_results')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
 
       if (error) throw error;
-      setProcessingResults(data || []);
+      setProcessingResults((data || []) as EmailProcessingResult[]);
     } catch (error: any) {
       console.error('Error fetching processing results:', error);
     }

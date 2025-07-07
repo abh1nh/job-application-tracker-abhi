@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,7 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
 
       if (editingApplication) {
         const { data, error } = await supabase
-          .from('job_applications' as any)
+          .from('job_applications')
           .update({
             ...formData,
             updated_at: new Date().toISOString(),
@@ -50,14 +49,14 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
           .single();
 
         if (error) throw error;
-        onApplicationAdded(data);
+        onApplicationAdded(data as JobApplication);
         toast({
           title: "Success",
           description: "Job application updated successfully!",
         });
       } else {
         const { data, error } = await supabase
-          .from('job_applications' as any)
+          .from('job_applications')
           .insert({
             ...formData,
             user_id: user.id,
@@ -66,7 +65,7 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
           .single();
 
         if (error) throw error;
-        onApplicationAdded(data);
+        onApplicationAdded(data as JobApplication);
         toast({
           title: "Success",
           description: "Job application added successfully!",
