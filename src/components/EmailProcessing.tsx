@@ -15,7 +15,7 @@ export const EmailProcessing: React.FC = () => {
   const fetchEmails = async () => {
     try {
       const { data, error } = await supabase
-        .from('emails')
+        .from('emails' as any)
         .select('*')
         .order('received_at', { ascending: false })
         .limit(10);
@@ -34,7 +34,7 @@ export const EmailProcessing: React.FC = () => {
   const fetchProcessingResults = async () => {
     try {
       const { data, error } = await supabase
-        .from('email_processing_results')
+        .from('email_processing_results' as any)
         .select('*')
         .order('created_at', { ascending: false })
         .limit(10);

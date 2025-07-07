@@ -14,7 +14,140 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      email_processing_results: {
+        Row: {
+          confidence_score: number
+          created_at: string
+          email_id: string
+          extracted_data: Json | null
+          id: string
+          job_application_id: string | null
+          processing_notes: string | null
+        }
+        Insert: {
+          confidence_score: number
+          created_at?: string
+          email_id: string
+          extracted_data?: Json | null
+          id?: string
+          job_application_id?: string | null
+          processing_notes?: string | null
+        }
+        Update: {
+          confidence_score?: number
+          created_at?: string
+          email_id?: string
+          extracted_data?: Json | null
+          id?: string
+          job_application_id?: string | null
+          processing_notes?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_processing_results_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_processing_results_job_application_id_fkey"
+            columns: ["job_application_id"]
+            isOneToOne: false
+            referencedRelation: "job_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emails: {
+        Row: {
+          body: string
+          created_at: string
+          gmail_message_id: string
+          id: string
+          job_application_id: string | null
+          processed: boolean
+          received_at: string
+          recipient: string
+          sender: string
+          subject: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          gmail_message_id: string
+          id?: string
+          job_application_id?: string | null
+          processed?: boolean
+          received_at: string
+          recipient: string
+          sender: string
+          subject: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          gmail_message_id?: string
+          id?: string
+          job_application_id?: string | null
+          processed?: boolean
+          received_at?: string
+          recipient?: string
+          sender?: string
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emails_job_application_id_fkey"
+            columns: ["job_application_id"]
+            isOneToOne: false
+            referencedRelation: "job_applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_applications: {
+        Row: {
+          application_date: string
+          application_url: string | null
+          company_name: string
+          created_at: string
+          id: string
+          job_description: string | null
+          notes: string | null
+          position_title: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          application_date: string
+          application_url?: string | null
+          company_name: string
+          created_at?: string
+          id?: string
+          job_description?: string | null
+          notes?: string | null
+          position_title: string
+          status: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          application_date?: string
+          application_url?: string | null
+          company_name?: string
+          created_at?: string
+          id?: string
+          job_description?: string | null
+          notes?: string | null
+          position_title?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

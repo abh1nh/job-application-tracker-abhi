@@ -20,7 +20,7 @@ export const Dashboard: React.FC = () => {
   const fetchApplications = async () => {
     try {
       const { data, error } = await supabase
-        .from('job_applications')
+        .from('job_applications' as any)
         .select('*')
         .order('application_date', { ascending: false });
 
@@ -61,7 +61,7 @@ export const Dashboard: React.FC = () => {
 
     try {
       const { error } = await supabase
-        .from('job_applications')
+        .from('job_applications' as any)
         .delete()
         .eq('id', id);
 

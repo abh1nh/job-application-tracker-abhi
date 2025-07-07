@@ -40,7 +40,7 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
 
       if (editingApplication) {
         const { data, error } = await supabase
-          .from('job_applications')
+          .from('job_applications' as any)
           .update({
             ...formData,
             updated_at: new Date().toISOString(),
@@ -57,7 +57,7 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         });
       } else {
         const { data, error } = await supabase
-          .from('job_applications')
+          .from('job_applications' as any)
           .insert({
             ...formData,
             user_id: user.id,
