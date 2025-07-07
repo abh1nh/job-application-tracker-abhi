@@ -1,28 +1,53 @@
 
-export interface JobApplication {
+export interface JobEntry {
   id: string;
+  user_id: string;
+  company: string;
+  position: string;
+  source?: string;
+  status: string;
+  applied_at: string;
+  updated_at?: string;
+}
+
+export interface EmailEvent {
+  id: string;
+  user_id: string;
+  email_subject: string;
+  message_id: string;
+  timestamp: string;
+  job_entry_id?: string;
+  type: string;
+  raw_text: string;
+}
+
+export interface UserNote {
+  id: string;
+  job_entry_id: string;
+  user_id: string;
+  content: string;
+  created_at?: string;
+}
+
+// Legacy interfaces for backward compatibility during transition
+export interface JobApplication extends JobEntry {
   company_name: string;
   position_title: string;
   application_date: string;
-  status: 'applied' | 'interview' | 'offer' | 'rejected' | 'withdrawn';
   job_description?: string;
   application_url?: string;
   notes?: string;
   created_at: string;
-  updated_at: string;
-  user_id: string;
 }
 
-export interface Email {
-  id: string;
-  gmail_message_id: string;
+export interface Email extends EmailEvent {
   subject: string;
   sender: string;
   recipient: string;
   body: string;
   received_at: string;
   processed: boolean;
-  created_at: string;
+  gmail_message_id: string;
   job_application_id?: string;
 }
 

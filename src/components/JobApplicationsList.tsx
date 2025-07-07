@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { JobApplication } from '@/types/jobApplication';
+import { JobEntry } from '@/types/jobApplication';
 import { Edit, Trash2, ExternalLink } from 'lucide-react';
 
 interface JobApplicationsListProps {
-  applications: JobApplication[];
-  onEdit: (application: JobApplication) => void;
+  applications: JobEntry[];
+  onEdit: (application: JobEntry) => void;
   onDelete: (id: string) => void;
 }
 
@@ -43,11 +43,16 @@ export const JobApplicationsList: React.FC<JobApplicationsListProps> = ({
           <div key={application.id} className="bg-white p-6 rounded-lg shadow-md border">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h4 className="text-lg font-semibold">{application.position_title}</h4>
-                <p className="text-gray-600">{application.company_name}</p>
+                <h4 className="text-lg font-semibold">{application.position}</h4>
+                <p className="text-gray-600">{application.company}</p>
                 <p className="text-sm text-gray-500">
-                  Applied: {new Date(application.application_date).toLocaleDateString()}
+                  Applied: {new Date(application.applied_at).toLocaleDateString()}
                 </p>
+                {application.source && (
+                  <p className="text-sm text-gray-500">
+                    Source: {application.source}
+                  </p>
+                )}
               </div>
               
               <div className="flex items-center gap-2">
@@ -56,16 +61,6 @@ export const JobApplicationsList: React.FC<JobApplicationsListProps> = ({
                 </span>
                 
                 <div className="flex gap-1">
-                  {application.application_url && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => window.open(application.application_url, '_blank')}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  )}
-                  
                   <Button
                     size="sm"
                     variant="outline"
@@ -84,20 +79,6 @@ export const JobApplicationsList: React.FC<JobApplicationsListProps> = ({
                 </div>
               </div>
             </div>
-            
-            {application.job_description && (
-              <div className="mb-3">
-                <h5 className="font-medium text-sm text-gray-700 mb-1">Job Description:</h5>
-                <p className="text-sm text-gray-600 line-clamp-3">{application.job_description}</p>
-              </div>
-            )}
-            
-            {application.notes && (
-              <div>
-                <h5 className="font-medium text-sm text-gray-700 mb-1">Notes:</h5>
-                <p className="text-sm text-gray-600">{application.notes}</p>
-              </div>
-            )}
           </div>
         ))}
       </div>

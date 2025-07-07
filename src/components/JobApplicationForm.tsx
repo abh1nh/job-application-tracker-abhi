@@ -1,14 +1,15 @@
+
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { JobApplication } from '@/types/jobApplication';
+import { JobEntry } from '@/types/jobApplication';
 
 interface JobApplicationFormProps {
-  onApplicationAdded: (application: JobApplication) => void;
-  editingApplication?: JobApplication | null;
+  onApplicationAdded: (application: JobEntry) => void;
+  editingApplication?: JobEntry | null;
   onCancel: () => void;
 }
 
@@ -18,13 +19,11 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
   onCancel
 }) => {
   const [formData, setFormData] = useState({
-    company_name: editingApplication?.company_name || '',
-    position_title: editingApplication?.position_title || '',
-    application_date: editingApplication?.application_date?.split('T')[0] || new Date().toISOString().split('T')[0],
-    status: editingApplication?.status || 'applied' as const,
-    job_description: editingApplication?.job_description || '',
-    application_url: editingApplication?.application_url || '',
-    notes: editingApplication?.notes || '',
+    company: editingApplication?.company || '',
+    position: editingApplication?.position || '',
+    applied_at: editingApplication?.applied_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+    status: editingApplication?.status || 'applied',
+    source: editingApplication?.source || '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -39,33 +38,34 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
 
       if (editingApplication) {
         const { data, error } = await supabase
-          .from('job_applications')
+          .from('job_entries')
           .update({
             ...formData,
-            updated_at: new Date().toISOString(),
+            applied_at: formData.applied_at + 'T00:00:00Z',
           })
           .eq('id', editingApplication.id)
           .select()
           .single();
 
         if (error) throw error;
-        onApplicationAdded(data as JobApplication);
+        onApplicationAdded(data as JobEntry);
         toast({
           title: "Success",
           description: "Job application updated successfully!",
         });
       } else {
         const { data, error } = await supabase
-          .from('job_applications')
+          .from('job_entries')
           .insert({
             ...formData,
             user_id: user.id,
+            applied_at: formData.applied_at + 'T00:00:00Z',
           })
           .select()
           .single();
 
         if (error) throw error;
-        onApplicationAdded(data as JobApplication);
+        onApplicationAdded(data as JobEntry);
         toast({
           title: "Success",
           description: "Job application added successfully!",
@@ -73,13 +73,11 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
       }
 
       setFormData({
-        company_name: '',
-        position_title: '',
-        application_date: new Date().toISOString().split('T')[0],
+        company: '',
+        position: '',
+        applied_at: new Date().toISOString().split('T')[0],
         status: 'applied',
-        job_description: '',
-        application_url: '',
-        notes: '',
+        source: '',
       });
     } catch (error: any) {
       toast({
@@ -101,32 +99,32 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="company_name">Company Name *</Label>
+            <Label htmlFor="company">Company Name *</Label>
             <Input
-              id="company_name"
-              value={formData.company_name}
-              onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+              id="company"
+              value={formData.company}
+              onChange={(e) => setFormData({ ...formData, company: e.target.value })}
               required
             />
           </div>
           
           <div>
-            <Label htmlFor="position_title">Position Title *</Label>
+            <Label htmlFor="position">Position Title *</Label>
             <Input
-              id="position_title"
-              value={formData.position_title}
-              onChange={(e) => setFormData({ ...formData, position_title: e.target.value })}
+              id="position"
+              value={formData.position}
+              onChange={(e) => setFormData({ ...formData, position: e.target.value })}
               required
             />
           </div>
           
           <div>
-            <Label htmlFor="application_date">Application Date *</Label>
+            <Label htmlFor="applied_at">Application Date *</Label>
             <Input
-              id="application_date"
+              id="applied_at"
               type="date"
-              value={formData.application_date}
-              onChange={(e) => setFormData({ ...formData, application_date: e.target.value })}
+              value={formData.applied_at}
+              onChange={(e) => setFormData({ ...formData, applied_at: e.target.value })}
               required
             />
           </div>
@@ -136,7 +134,7 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
             <select
               id="status"
               value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               className="w-full p-2 border rounded-md"
             >
               <option value="applied">Applied</option>
@@ -149,32 +147,12 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         </div>
         
         <div>
-          <Label htmlFor="application_url">Application URL</Label>
+          <Label htmlFor="source">Source</Label>
           <Input
-            id="application_url"
-            type="url"
-            value={formData.application_url}
-            onChange={(e) => setFormData({ ...formData, application_url: e.target.value })}
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="job_description">Job Description</Label>
-          <textarea
-            id="job_description"
-            value={formData.job_description}
-            onChange={(e) => setFormData({ ...formData, job_description: e.target.value })}
-            className="w-full p-2 border rounded-md h-32"
-          />
-        </div>
-        
-        <div>
-          <Label htmlFor="notes">Notes</Label>
-          <textarea
-            id="notes"
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            className="w-full p-2 border rounded-md h-24"
+            id="source"
+            value={formData.source}
+            onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+            placeholder="e.g., LinkedIn, Company Website, Referral"
           />
         </div>
         

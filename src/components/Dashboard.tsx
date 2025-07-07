@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { JobApplication } from '@/types/jobApplication';
+import { JobEntry } from '@/types/jobApplication';
 import { JobApplicationForm } from './JobApplicationForm';
 import { JobApplicationsList } from './JobApplicationsList';
 import { EmailProcessing } from './EmailProcessing';
@@ -9,22 +10,22 @@ import { Button } from '@/components/ui/button';
 import { LogOut, Plus } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
-  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const [applications, setApplications] = useState<JobEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingApplication, setEditingApplication] = useState<JobApplication | null>(null);
+  const [editingApplication, setEditingApplication] = useState<JobEntry | null>(null);
   const [activeTab, setActiveTab] = useState<'applications' | 'emails'>('applications');
   const { toast } = useToast();
 
   const fetchApplications = async () => {
     try {
       const { data, error } = await supabase
-        .from('job_applications')
+        .from('job_entries')
         .select('*')
-        .order('application_date', { ascending: false });
+        .order('applied_at', { ascending: false });
 
       if (error) throw error;
-      setApplications((data || []) as JobApplication[]);
+      setApplications((data || []) as JobEntry[]);
     } catch (error: any) {
       toast({
         title: "Error",
@@ -36,7 +37,7 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  const handleApplicationAdded = (application: JobApplication) => {
+  const handleApplicationAdded = (application: JobEntry) => {
     if (editingApplication) {
       setApplications(prev => 
         prev.map(app => app.id === application.id ? application : app)
@@ -48,7 +49,7 @@ export const Dashboard: React.FC = () => {
     setShowForm(false);
   };
 
-  const handleEdit = (application: JobApplication) => {
+  const handleEdit = (application: JobEntry) => {
     setEditingApplication(application);
     setShowForm(true);
   };
@@ -60,7 +61,7 @@ export const Dashboard: React.FC = () => {
 
     try {
       const { error } = await supabase
-        .from('job_applications')
+        .from('job_entries')
         .delete()
         .eq('id', id);
 

@@ -14,137 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
-      email_processing_results: {
+      email_events: {
         Row: {
-          confidence_score: number
-          created_at: string
-          email_id: string
-          extracted_data: Json | null
+          email_subject: string
           id: string
-          job_application_id: string | null
-          processing_notes: string | null
-        }
-        Insert: {
-          confidence_score: number
-          created_at?: string
-          email_id: string
-          extracted_data?: Json | null
-          id?: string
-          job_application_id?: string | null
-          processing_notes?: string | null
-        }
-        Update: {
-          confidence_score?: number
-          created_at?: string
-          email_id?: string
-          extracted_data?: Json | null
-          id?: string
-          job_application_id?: string | null
-          processing_notes?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "email_processing_results_email_id_fkey"
-            columns: ["email_id"]
-            isOneToOne: false
-            referencedRelation: "emails"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "email_processing_results_job_application_id_fkey"
-            columns: ["job_application_id"]
-            isOneToOne: false
-            referencedRelation: "job_applications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      emails: {
-        Row: {
-          body: string
-          created_at: string
-          gmail_message_id: string
-          id: string
-          job_application_id: string | null
-          processed: boolean
-          received_at: string
-          recipient: string
-          sender: string
-          subject: string
-        }
-        Insert: {
-          body: string
-          created_at?: string
-          gmail_message_id: string
-          id?: string
-          job_application_id?: string | null
-          processed?: boolean
-          received_at: string
-          recipient: string
-          sender: string
-          subject: string
-        }
-        Update: {
-          body?: string
-          created_at?: string
-          gmail_message_id?: string
-          id?: string
-          job_application_id?: string | null
-          processed?: boolean
-          received_at?: string
-          recipient?: string
-          sender?: string
-          subject?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "emails_job_application_id_fkey"
-            columns: ["job_application_id"]
-            isOneToOne: false
-            referencedRelation: "job_applications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      job_applications: {
-        Row: {
-          application_date: string
-          application_url: string | null
-          company_name: string
-          created_at: string
-          id: string
-          job_description: string | null
-          notes: string | null
-          position_title: string
-          status: string
-          updated_at: string
+          job_entry_id: string | null
+          message_id: string
+          raw_text: string
+          timestamp: string
+          type: string
           user_id: string
         }
         Insert: {
-          application_date: string
-          application_url?: string | null
-          company_name: string
-          created_at?: string
+          email_subject: string
           id?: string
-          job_description?: string | null
-          notes?: string | null
-          position_title: string
-          status: string
-          updated_at?: string
+          job_entry_id?: string | null
+          message_id: string
+          raw_text: string
+          timestamp: string
+          type: string
           user_id: string
         }
         Update: {
-          application_date?: string
-          application_url?: string | null
-          company_name?: string
-          created_at?: string
+          email_subject?: string
           id?: string
-          job_description?: string | null
-          notes?: string | null
-          position_title?: string
-          status?: string
-          updated_at?: string
+          job_entry_id?: string | null
+          message_id?: string
+          raw_text?: string
+          timestamp?: string
+          type?: string
           user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_events_job_entry_id_fkey"
+            columns: ["job_entry_id"]
+            isOneToOne: false
+            referencedRelation: "job_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_entries: {
+        Row: {
+          applied_at: string
+          company: string
+          id: string
+          position: string
+          source: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          applied_at: string
+          company: string
+          id?: string
+          position: string
+          source?: string | null
+          status: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          applied_at?: string
+          company?: string
+          id?: string
+          position?: string
+          source?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notes: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          job_entry_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          job_entry_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          job_entry_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notes_job_entry_id_fkey"
+            columns: ["job_entry_id"]
+            isOneToOne: false
+            referencedRelation: "job_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
         }
         Relationships: []
       }
