@@ -36,27 +36,9 @@ export const GmailIntegration: React.FC = () => {
   const initiateGmailOAuth = async () => {
     setLoading(true);
     try {
-      // Get the current session to include auth headers
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-init');
       
-      if (sessionError || !session) {
-        throw new Error('No active session found. Please log in first.');
-      }
-
-      console.log('Invoking gmail-oauth-init function...');
-      
-      const { data, error } = await supabase.functions.invoke('gmail-oauth-init', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-      
-      if (error) {
-        console.error('Error from gmail-oauth-init:', error);
-        throw error;
-      }
-      
-      console.log('OAuth init response:', data);
+      if (error) throw error;
       
       // Redirect to Google OAuth
       if (data?.authUrl) {
@@ -65,7 +47,7 @@ export const GmailIntegration: React.FC = () => {
         throw new Error('No auth URL received from server');
       }
     } catch (error: any) {
-      console.error('Error in initiateGmailOAuth:', error);
+      console.error('Error initiating Gmail OAuth:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to initiate Gmail OAuth",
@@ -103,34 +85,16 @@ export const GmailIntegration: React.FC = () => {
   const scanEmails = async () => {
     setScanLoading(true);
     try {
-      // Get the current session to include auth headers
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      const { data, error } = await supabase.functions.invoke('gmail-scan-emails');
       
-      if (sessionError || !session) {
-        throw new Error('No active session found. Please log in first.');
-      }
-
-      console.log('Invoking gmail-scan-emails function...');
-      
-      const { data, error } = await supabase.functions.invoke('gmail-scan-emails', {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
-      
-      if (error) {
-        console.error('Error from gmail-scan-emails:', error);
-        throw error;
-      }
-      
-      console.log('Email scan response:', data);
+      if (error) throw error;
       
       toast({
         title: "Success",
         description: `Email scan completed. Found ${data?.processedCount || 0} new emails.`,
       });
     } catch (error: any) {
-      console.error('Error in scanEmails:', error);
+      console.error('Error scanning emails:', error);
       toast({
         title: "Error",
         description: error.message || "Failed to scan emails",
