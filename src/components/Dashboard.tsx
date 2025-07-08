@@ -6,6 +6,7 @@ import { JobEntry } from '@/types/jobApplication';
 import { JobApplicationForm } from './JobApplicationForm';
 import { JobApplicationsList } from './JobApplicationsList';
 import { EmailProcessing } from './EmailProcessing';
+import { GmailIntegration } from './GmailIntegration';
 import { Button } from '@/components/ui/button';
 import { LogOut, Plus } from 'lucide-react';
 
@@ -14,7 +15,7 @@ export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingApplication, setEditingApplication] = useState<JobEntry | null>(null);
-  const [activeTab, setActiveTab] = useState<'applications' | 'emails'>('applications');
+  const [activeTab, setActiveTab] = useState<'applications' | 'emails' | 'gmail'>('applications');
   const { toast } = useToast();
 
   const fetchApplications = async () => {
@@ -92,6 +93,25 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchApplications();
+    
+    // Check for Gmail connection callback
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('gmail_connected') === 'true') {
+      toast({
+        title: "Success",
+        description: "Gmail account connected successfully!",
+      });
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (urlParams.get('gmail_error')) {
+      toast({
+        title: "Error",
+        description: decodeURIComponent(urlParams.get('gmail_error') || 'Gmail connection failed'),
+        variant: "destructive",
+      });
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
   }, []);
 
   if (loading) {
@@ -120,6 +140,16 @@ export const Dashboard: React.FC = () => {
                   }`}
                 >
                   Applications
+                </button>
+                <button
+                  onClick={() => setActiveTab('gmail')}
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${
+                    activeTab === 'gmail'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  Gmail Integration
                 </button>
                 <button
                   onClick={() => setActiveTab('emails')}
@@ -177,6 +207,7 @@ export const Dashboard: React.FC = () => {
           </div>
         )}
 
+        {activeTab === 'gmail' && <GmailIntegration />}
         {activeTab === 'emails' && <EmailProcessing />}
       </main>
     </div>

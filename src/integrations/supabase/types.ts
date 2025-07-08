@@ -18,6 +18,7 @@ export type Database = {
         Row: {
           email_subject: string
           id: string
+          is_job_related: boolean | null
           job_entry_id: string | null
           message_id: string
           raw_text: string
@@ -28,6 +29,7 @@ export type Database = {
         Insert: {
           email_subject: string
           id?: string
+          is_job_related?: boolean | null
           job_entry_id?: string | null
           message_id: string
           raw_text: string
@@ -38,6 +40,7 @@ export type Database = {
         Update: {
           email_subject?: string
           id?: string
+          is_job_related?: boolean | null
           job_entry_id?: string | null
           message_id?: string
           raw_text?: string
@@ -57,6 +60,44 @@ export type Database = {
             foreignKeyName: "email_events_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      gmail_tokens: {
+        Row: {
+          access_token: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          refresh_token: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          refresh_token: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          refresh_token?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gmail_tokens_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "users"
             referencedColumns: ["id"]
           },
@@ -147,16 +188,19 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          last_email_scan_at: string | null
         }
         Insert: {
           created_at?: string | null
           email: string
           id?: string
+          last_email_scan_at?: string | null
         }
         Update: {
           created_at?: string | null
           email?: string
           id?: string
+          last_email_scan_at?: string | null
         }
         Relationships: []
       }
