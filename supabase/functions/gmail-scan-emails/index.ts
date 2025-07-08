@@ -27,6 +27,8 @@ interface EmailData {
 }
 
 async function refreshGmailToken(refreshToken: string, userId: string) {
+  console.log('Refreshing Gmail token for user:', userId);
+  
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -39,13 +41,17 @@ async function refreshGmailToken(refreshToken: string, userId: string) {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to refresh Gmail token');
+    const errorText = await response.text();
+    console.error('Token refresh failed:', response.status, errorText);
+    throw new Error(`Failed to refresh Gmail token: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
+  console.log('Token refreshed successfully');
+  
   const expiresAt = new Date(Date.now() + data.expires_in * 1000).toISOString();
 
-  await supabase
+  const { error: updateError } = await supabase
     .from('gmail_tokens')
     .update({
       access_token: data.access_token,
@@ -53,25 +59,42 @@ async function refreshGmailToken(refreshToken: string, userId: string) {
     })
     .eq('user_id', userId);
 
+  if (updateError) {
+    console.error('Error updating refreshed token:', updateError);
+    throw new Error('Failed to update refreshed token');
+  }
+
   return data.access_token;
 }
 
 async function getValidAccessToken(userId: string) {
+  console.log('Getting valid access token for user:', userId);
+  
   const { data: tokenData, error } = await supabase
     .from('gmail_tokens')
     .select('*')
     .eq('user_id', userId)
     .single();
 
-  if (error || !tokenData) {
+  if (error) {
+    console.error('Error fetching Gmail token:', error);
     throw new Error('No Gmail token found');
   }
 
-  // Check if token is expired
-  if (tokenData.expires_at && new Date(tokenData.expires_at) <= new Date()) {
+  if (!tokenData) {
+    throw new Error('No Gmail token found');
+  }
+
+  console.log('Token found, checking expiry...');
+  
+  // Check if token is expired (add 5 minute buffer)
+  const expiryBuffer = 5 * 60 * 1000; // 5 minutes in milliseconds
+  if (tokenData.expires_at && new Date(tokenData.expires_at).getTime() <= Date.now() + expiryBuffer) {
+    console.log('Token is expired or will expire soon, refreshing...');
     return await refreshGmailToken(tokenData.refresh_token, userId);
   }
 
+  console.log('Token is valid');
   return tokenData.access_token;
 }
 
@@ -175,6 +198,7 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
+      console.error('Authentication failed:', authError);
       throw new Error('Authentication failed');
     }
 
@@ -182,6 +206,7 @@ serve(async (req) => {
 
     // Get valid access token
     const accessToken = await getValidAccessToken(user.id);
+    console.log('Got valid access token');
 
     // Get last scan timestamp
     const { data: userData } = await supabase
@@ -193,11 +218,13 @@ serve(async (req) => {
     const lastScanAt = userData?.last_email_scan_at;
     const sinceTimestamp = lastScanAt ? new Date(lastScanAt).getTime() / 1000 : undefined;
 
-    // Build Gmail API query
-    let query = 'in:inbox';
+    // Build Gmail API query - search for common job-related terms
+    let query = 'in:inbox (job OR application OR interview OR offer OR hiring OR position OR career OR opportunity)';
     if (sinceTimestamp) {
       query += ` after:${Math.floor(sinceTimestamp)}`;
     }
+
+    console.log('Gmail query:', query);
 
     // Fetch emails from Gmail API
     const gmailResponse = await fetch(
@@ -205,12 +232,46 @@ serve(async (req) => {
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
+          'Accept': 'application/json',
         },
       }
     );
 
     if (!gmailResponse.ok) {
-      throw new Error(`Gmail API error: ${gmailResponse.status}`);
+      const errorText = await gmailResponse.text();
+      console.error(`Gmail API error: ${gmailResponse.status}`, errorText);
+      
+      // If unauthorized, try to refresh token once more
+      if (gmailResponse.status === 401) {
+        console.log('Received 401, attempting token refresh...');
+        const newAccessToken = await refreshGmailToken(
+          (await supabase.from('gmail_tokens').select('refresh_token').eq('user_id', user.id).single()).data?.refresh_token,
+          user.id
+        );
+        
+        // Retry the request with new token
+        const retryResponse = await fetch(
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=50`,
+          {
+            headers: {
+              'Authorization': `Bearer ${newAccessToken}`,
+              'Accept': 'application/json',
+            },
+          }
+        );
+        
+        if (!retryResponse.ok) {
+          const retryErrorText = await retryResponse.text();
+          console.error(`Gmail API retry error: ${retryResponse.status}`, retryErrorText);
+          throw new Error(`Gmail API error: ${retryResponse.status} - ${retryErrorText}`);
+        }
+        
+        const retryData = await retryResponse.json();
+        const messages = retryData.messages || [];
+        console.log(`Found ${messages.length} messages after retry`);
+      } else {
+        throw new Error(`Gmail API error: ${gmailResponse.status} - ${errorText}`);
+      }
     }
 
     const gmailData = await gmailResponse.json();
@@ -225,15 +286,19 @@ serve(async (req) => {
       try {
         // Get full message details
         const messageResponse = await fetch(
-          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}`,
+          `https://gmail.googleapis.com/gmail/v1/users/me/messages/${message.id}?format=full`,
           {
             headers: {
               'Authorization': `Bearer ${accessToken}`,
+              'Accept': 'application/json',
             },
           }
         );
 
-        if (!messageResponse.ok) continue;
+        if (!messageResponse.ok) {
+          console.error(`Failed to fetch message ${message.id}:`, messageResponse.status);
+          continue;
+        }
 
         const emailData: EmailData = await messageResponse.json();
         const { subject, body } = extractEmailContent(emailData);
@@ -246,13 +311,16 @@ serve(async (req) => {
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (existingEvent) continue;
+        if (existingEvent) {
+          console.log(`Email ${emailData.id} already processed, skipping`);
+          continue;
+        }
 
         // Extract job information using AI
         const { isJobRelated, extractedData } = await extractJobInfo(body, subject);
 
         // Store email event
-        await supabase
+        const { error: emailEventError } = await supabase
           .from('email_events')
           .insert({
             user_id: user.id,
@@ -263,6 +331,10 @@ serve(async (req) => {
             raw_text: body,
             is_job_related: isJobRelated,
           });
+
+        if (emailEventError) {
+          console.error('Error storing email event:', emailEventError);
+        }
 
         // If job-related and we have extracted data, create/update job entry
         if (isJobRelated && extractedData && extractedData.company && extractedData.position) {
@@ -279,6 +351,8 @@ serve(async (req) => {
 
           if (!jobError) {
             jobRelatedCount++;
+          } else {
+            console.error('Error creating job entry:', jobError);
           }
         }
 
@@ -289,10 +363,14 @@ serve(async (req) => {
     }
 
     // Update last scan timestamp
-    await supabase
+    const { error: updateUserError } = await supabase
       .from('users')
       .update({ last_email_scan_at: new Date().toISOString() })
       .eq('id', user.id);
+
+    if (updateUserError) {
+      console.error('Error updating last scan timestamp:', updateUserError);
+    }
 
     console.log(`Processed ${processedCount} emails, found ${jobRelatedCount} job-related`);
 
