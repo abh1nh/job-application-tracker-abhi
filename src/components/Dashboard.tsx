@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -7,11 +6,12 @@ import { JobApplicationForm } from './JobApplicationForm';
 import { JobApplicationsList } from './JobApplicationsList';
 import { GmailIntegration } from './GmailIntegration';
 import { Button } from '@/components/ui/button';
-import { LogOut, Plus } from 'lucide-react';
+import { LogOut, Plus, RefreshCw } from 'lucide-react';
 
 export const Dashboard: React.FC = () => {
   const [applications, setApplications] = useState<JobEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingApplication, setEditingApplication] = useState<JobEntry | null>(null);
   const [activeTab, setActiveTab] = useState<'applications' | 'gmail'>('applications');
@@ -35,6 +35,32 @@ export const Dashboard: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const { data, error } = await supabase
+        .from('job_entries')
+        .select('*')
+        .order('applied_at', { ascending: false });
+
+      if (error) throw error;
+      setApplications((data || []) as JobEntry[]);
+      toast({
+        title: "Success",
+        description: "Job applications refreshed successfully!",
+      });
+    } catch (error: any) {
+      console.error('Error refreshing applications:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh job applications",
+        variant: "destructive",
+      });
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -177,10 +203,21 @@ export const Dashboard: React.FC = () => {
                   <p className="text-gray-600">Track your job applications and their status</p>
                 </div>
                 
-                <Button onClick={() => setShowForm(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Application
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={handleRefresh} 
+                    variant="outline" 
+                    disabled={refreshing}
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                  </Button>
+                  
+                  <Button onClick={() => setShowForm(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Application
+                  </Button>
+                </div>
               </div>
             )}
 
