@@ -35,13 +35,8 @@ serve(async (req) => {
       throw new Error('Authentication failed');
     }
 
-    // Generate OAuth URL with proper scopes
-    const scopes = [
-      'https://www.googleapis.com/auth/gmail.readonly',
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/userinfo.profile'
-    ];
-    
+    // Generate OAuth URL
+    const scopes = ['https://www.googleapis.com/auth/gmail.readonly'];
     const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
       `client_id=${googleClientId}&` +
       `redirect_uri=${encodeURIComponent(redirectUri)}&` +
@@ -50,8 +45,6 @@ serve(async (req) => {
       `access_type=offline&` +
       `prompt=consent&` +
       `state=${user.id}`;
-
-    console.log('Generated OAuth URL for user:', user.id);
 
     return new Response(
       JSON.stringify({ authUrl }),
