@@ -36,16 +36,39 @@ export const GmailIntegration: React.FC = () => {
   const initiateGmailOAuth = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('gmail-oauth-init');
+      // Get the current session to include auth headers
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (error) throw error;
+      if (sessionError || !session) {
+        throw new Error('No active session found. Please log in first.');
+      }
+
+      console.log('Invoking gmail-oauth-init function...');
+      
+      const { data, error } = await supabase.functions.invoke('gmail-oauth-init', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      
+      if (error) {
+        console.error('Error from gmail-oauth-init:', error);
+        throw error;
+      }
+      
+      console.log('OAuth init response:', data);
       
       // Redirect to Google OAuth
-      window.location.href = data.authUrl;
+      if (data?.authUrl) {
+        window.location.href = data.authUrl;
+      } else {
+        throw new Error('No auth URL received from server');
+      }
     } catch (error: any) {
+      console.error('Error in initiateGmailOAuth:', error);
       toast({
         title: "Error",
-        description: "Failed to initiate Gmail OAuth",
+        description: error.message || "Failed to initiate Gmail OAuth",
         variant: "destructive",
       });
     } finally {
@@ -68,6 +91,7 @@ export const GmailIntegration: React.FC = () => {
         description: "Gmail account disconnected successfully",
       });
     } catch (error: any) {
+      console.error('Error disconnecting Gmail:', error);
       toast({
         title: "Error",
         description: "Failed to disconnect Gmail account",
@@ -79,18 +103,37 @@ export const GmailIntegration: React.FC = () => {
   const scanEmails = async () => {
     setScanLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('gmail-scan-emails');
+      // Get the current session to include auth headers
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (error) throw error;
+      if (sessionError || !session) {
+        throw new Error('No active session found. Please log in first.');
+      }
+
+      console.log('Invoking gmail-scan-emails function...');
+      
+      const { data, error } = await supabase.functions.invoke('gmail-scan-emails', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+      
+      if (error) {
+        console.error('Error from gmail-scan-emails:', error);
+        throw error;
+      }
+      
+      console.log('Email scan response:', data);
       
       toast({
         title: "Success",
-        description: `Email scan completed. Found ${data.processedCount} new emails.`,
+        description: `Email scan completed. Found ${data?.processedCount || 0} new emails.`,
       });
     } catch (error: any) {
+      console.error('Error in scanEmails:', error);
       toast({
         title: "Error",
-        description: "Failed to scan emails",
+        description: error.message || "Failed to scan emails",
         variant: "destructive",
       });
     } finally {

@@ -22,17 +22,38 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Gmail OAuth init function called');
+    
     // Get the user from the request
     const authHeader = req.headers.get('authorization');
+    console.log('Authorization header present:', !!authHeader);
+    
     if (!authHeader) {
+      console.error('No authorization header provided');
       throw new Error('No authorization header');
     }
 
     const token = authHeader.replace('Bearer ', '');
+    console.log('Attempting to get user with token...');
+    
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (authError || !user) {
-      throw new Error('Authentication failed');
+    if (authError) {
+      console.error('Auth error:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+    
+    if (!user) {
+      console.error('No user found');
+      throw new Error('Authentication failed: No user found');
+    }
+
+    console.log('User authenticated successfully:', user.id);
+    
+    // Verify we have all required environment variables
+    if (!googleClientId || !googleClientSecret) {
+      console.error('Missing Google OAuth credentials');
+      throw new Error('Google OAuth credentials not configured');
     }
 
     // Generate OAuth URL
@@ -46,6 +67,8 @@ serve(async (req) => {
       `prompt=consent&` +
       `state=${user.id}`;
 
+    console.log('Generated OAuth URL successfully');
+
     return new Response(
       JSON.stringify({ authUrl }),
       {
@@ -56,7 +79,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in gmail-oauth-init:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Check function logs for more information'
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
