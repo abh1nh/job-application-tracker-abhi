@@ -28,6 +28,7 @@ export const Dashboard: React.FC = () => {
       if (error) throw error;
       setApplications((data || []) as JobEntry[]);
     } catch (error: any) {
+      console.error('Error fetching applications:', error);
       toast({
         title: "Error",
         description: "Failed to fetch job applications",
@@ -74,6 +75,7 @@ export const Dashboard: React.FC = () => {
         description: "Job application deleted successfully!",
       });
     } catch (error: any) {
+      console.error('Error deleting application:', error);
       toast({
         title: "Error",
         description: "Failed to delete job application",
@@ -83,7 +85,11 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   const handleCancel = () => {
@@ -112,7 +118,7 @@ export const Dashboard: React.FC = () => {
       // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []);
+  }, [toast]);
 
   if (loading) {
     return (
