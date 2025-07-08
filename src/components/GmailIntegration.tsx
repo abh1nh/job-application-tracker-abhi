@@ -89,19 +89,10 @@ export const GmailIntegration: React.FC = () => {
       
       if (error) throw error;
       
-      const processedCount = data?.processedCount || 0;
-      const jobRelatedCount = data?.jobRelatedCount || 0;
-      
       toast({
         title: "Success",
-        description: `Email scan completed. Processed ${processedCount} emails, found ${jobRelatedCount} job-related emails.`,
+        description: `Email scan completed. Found ${data?.processedCount || 0} new emails. Refreshing...`,
       });
-
-      // Refresh the page to update the applications list
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000); // Give user time to read the success message
-      
     } catch (error: any) {
       console.error('Error scanning emails:', error);
       toast({
