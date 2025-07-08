@@ -119,15 +119,7 @@ async function extractJobInfo(emailContent: string, subject: string) {
     }
 
     const data = await response.json();
-
-    let raw = data.choices[0].message.content.trim();
-
-    // If it starts with ```, remove the outer fences:
-    if (raw.startsWith('```')) {
-      raw = raw.replace(/^```(?:json)?\s*/, '').replace(/```$/, '');
-    }
-    
-    const result = JSON.parse(raw);
+    const result = JSON.parse(data.choices[0].message.content);
     
     return {
       isJobRelated: result.isJobRelated && result.confidence > 0.7,
@@ -209,7 +201,7 @@ serve(async (req) => {
 
     // Fetch emails from Gmail API
     const gmailResponse = await fetch(
-      `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=50`,
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(query)}&maxResults=10`,
       {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
