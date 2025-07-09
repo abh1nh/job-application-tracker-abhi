@@ -134,7 +134,7 @@ Always respond via the function "extract_job_info" and do not wrap in any markdo
         messages,
         functions,
         function_call: { name: 'extract_job_info' },
-        temperature: 0.0
+        temperature: 0.2
       })
     })
 
@@ -151,6 +151,7 @@ Always respond via the function "extract_job_info" and do not wrap in any markdo
 
     const parsed = JSON.parse(call.arguments)
     console.log('confidence :'+parsed.confidence);
+    console.log('isJobRelated :'+parsed.isJobRelated);
     const isJobRelated = parsed.isJobRelated && parsed.confidence > 0.7
 
     return {
