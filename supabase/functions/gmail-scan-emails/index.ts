@@ -77,59 +77,92 @@ async function getValidAccessToken(userId: string) {
 
 async function extractJobInfo(emailContent: string, subject: string) {
   if (!openAIApiKey) {
-    return { isJobRelated: false, extractedData: null };
+    return { isJobRelated: false, extractedData: null }
   }
 
-  const prompt = `
-  Analyze this email and determine if it's job application related. If it is, extract relevant information.
-  
-  Email Subject: ${subject}
-  Email Content: ${emailContent}
-  
-  Return a JSON object with:
-  - isJobRelated: boolean (true if this email is related to job applications)
-  - company: string (company name if found)
-  - position: string (job position if found)
-  - status: string (one of: "applied", "interview", "offer", "rejected", "withdrawn" - based on email content)
-  - confidence: number (0-1, how confident you are this is job-related)
-  
-  Only return the JSON object, no other text.
-  `;
+  const messages = [
+    {
+      role: 'system',
+      content: `
+You are an email parsing assistant.  
+Decide if the following email is a direct job application/update (not a promotional or newsletter blast).  
+If it is, extract these fields into JSON:  
+- isJobRelated (boolean)  
+- company (string)  
+- position (string)  
+- status (enum: applied, interview, offer, rejected, withdrawn)  
+- portal (string; e.g. “LinkedIn”, “Indeed”, “Company Career Site”)  
+- confidence (0–1 number)  
+Always respond via the function “extract_job_info” and do not wrap in any markdown.`
+    },
+    {
+      role: 'user',
+      content: `Subject: ${subject}\n\n${emailContent}`
+    }
+  ]
+
+  const functions = [
+    {
+      name: 'extract_job_info',
+      description: 'Extracts job application details from a single email.',
+      parameters: {
+        type: 'object',
+        properties: {
+          isJobRelated: { type: 'boolean' },
+          company:       { type: 'string'  },
+          position:      { type: 'string'  },
+          status: {
+            type: 'string',
+            enum: ['applied','interview','offer','rejected','withdrawn']
+          },
+          portal:     { type: 'string'  },
+          confidence: { type: 'number'  }
+        },
+        required: ['isJobRelated','confidence']
+      }
+    }
+  ]
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are an AI assistant that analyzes emails for job application information. Always respond with valid JSON.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.3,
-      }),
-    });
+        model: 'gpt-4',
+        messages,
+        functions,
+        function_call: { name: 'extract_job_info' },
+        temperature: 0.0
+      })
+    })
 
-    if (!response.ok) {
-      console.error('OpenAI API error:', response.status);
-      return { isJobRelated: false, extractedData: null };
+    if (!res.ok) {
+      console.error('OpenAI API error:', await res.text())
+      return { isJobRelated: false, extractedData: null }
     }
 
-    const data = await response.json();
-    const result = JSON.parse(data.choices[0].message.content);
-    
+    const { choices } = await res.json()
+    const call = choices[0].message.function_call
+    if (!call || !call.arguments) {
+      return { isJobRelated: false, extractedData: null }
+    }
+
+    const parsed = JSON.parse(call.arguments)
+    const isJobRelated = parsed.isJobRelated && parsed.confidence > 0.7
+
     return {
-      isJobRelated: result.isJobRelated && result.confidence > 0.7,
-      extractedData: result.isJobRelated ? result : null
-    };
-  } catch (error) {
-    console.error('Error calling OpenAI:', error);
-    return { isJobRelated: false, extractedData: null };
+      isJobRelated,
+      extractedData: isJobRelated ? parsed : null
+    }
+  } catch (e) {
+    console.error('Error calling OpenAI function:', e)
+    return { isJobRelated: false, extractedData: null }
   }
 }
+
 
 function decodeBase64(data: string): string {
   try {
