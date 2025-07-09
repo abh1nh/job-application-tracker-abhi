@@ -130,7 +130,7 @@ Always respond via the function "extract_job_info" and do not wrap in any markdo
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-nano',
+        model: 'gpt-4.1-nano',
         messages,
         functions,
         function_call: { name: 'extract_job_info' },
