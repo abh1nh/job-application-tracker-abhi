@@ -24,6 +24,7 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
     applied_at: editingApplication?.applied_at?.split('T')[0] || new Date().toISOString().split('T')[0],
     status: editingApplication?.status || 'applied',
     source: editingApplication?.source || '',
+    portal: editingApplication?.portal || '',
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -78,6 +79,7 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
         applied_at: new Date().toISOString().split('T')[0],
         status: 'applied',
         source: '',
+        portal: '',
       });
     } catch (error: any) {
       toast({
@@ -146,14 +148,26 @@ export const JobApplicationForm: React.FC<JobApplicationFormProps> = ({
           </div>
         </div>
         
-        <div>
-          <Label htmlFor="source">Source</Label>
-          <Input
-            id="source"
-            value={formData.source}
-            onChange={(e) => setFormData({ ...formData, source: e.target.value })}
-            placeholder="e.g., LinkedIn, Company Website, Referral"
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="source">Source</Label>
+            <Input
+              id="source"
+              value={formData.source}
+              onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+              placeholder="e.g., LinkedIn, Company Website, Referral"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="portal">Portal</Label>
+            <Input
+              id="portal"
+              value={formData.portal}
+              onChange={(e) => setFormData({ ...formData, portal: e.target.value })}
+              placeholder="e.g., LinkedIn, Indeed, Company Career Site"
+            />
+          </div>
         </div>
         
         <div className="flex gap-2">

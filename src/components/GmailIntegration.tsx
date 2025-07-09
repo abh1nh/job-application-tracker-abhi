@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -90,7 +91,7 @@ export const GmailIntegration: React.FC = () => {
       
       toast({
         title: "Success",
-        description: `Email scan completed. Found ${data?.processedCount || 0} new emails. Refreshing...`,
+        description: `Email scan completed. Found ${data?.jobRelatedCount || 0} job-related emails out of ${data?.processedCount || 0} processed. Refreshing...`,
       });
 
       // Refresh the page after successful scan

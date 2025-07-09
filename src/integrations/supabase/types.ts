@@ -108,6 +108,7 @@ export type Database = {
           applied_at: string
           company: string
           id: string
+          portal: string | null
           position: string
           source: string | null
           status: string
@@ -118,6 +119,7 @@ export type Database = {
           applied_at: string
           company: string
           id?: string
+          portal?: string | null
           position: string
           source?: string | null
           status: string
@@ -128,6 +130,7 @@ export type Database = {
           applied_at?: string
           company?: string
           id?: string
+          portal?: string | null
           position?: string
           source?: string | null
           status?: string
