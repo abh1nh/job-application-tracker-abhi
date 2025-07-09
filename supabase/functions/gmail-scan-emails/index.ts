@@ -83,15 +83,27 @@ async function extractJobInfo(emailContent: string, subject: string) {
     {
       role: 'system',
       content: `
-You are an email parsing assistant.  
-Decide if the following email is a direct job application/update (not a promotional or newsletter blast).  
-If it is, extract these fields into JSON:  
-- isJobRelated (boolean)  
-- company (string)  
-- position (string)  
-- status (enum: applied, interview, offer, rejected, withdrawn)  
-- portal (string; e.g. "LinkedIn", "Indeed", "Company Career Site")  
-- confidence (0–1 number)  
+You are an email classification assistant specialized in job-related emails.
+Given an email, determine if it is a direct job application or a job application status update (e.g., interview invite, offer, rejection, or withdrawal).
+Exclude all promotional emails, job alerts, newsletters, or general job search notifications.
+
+If it is a direct job application or status update, extract and return the following JSON fields:
+
+isJobRelated (boolean, must be true)
+
+company (string)
+
+position (string)
+
+status (one of: applied, interview, offer, rejected, withdrawn)
+
+portal (string; e.g. "LinkedIn", "Indeed", "Company Career Site")
+
+confidence (0–1 number)
+
+If it is not a direct application or status update, return: { "isJobRelated": false }
+
+Do not confuse job alerts, newsletters, or promotional messages with direct job applications or status updates.
 Always respond via the function "extract_job_info" and do not wrap in any markdown.`
     },
     {
