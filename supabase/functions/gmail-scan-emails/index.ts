@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -91,9 +90,9 @@ If it is, extract these fields into JSON:
 - company (string)  
 - position (string)  
 - status (enum: applied, interview, offer, rejected, withdrawn)  
-- portal (string; e.g. “LinkedIn”, “Indeed”, “Company Career Site”)  
+- portal (string; e.g. "LinkedIn", "Indeed", "Company Career Site")  
 - confidence (0–1 number)  
-Always respond via the function “extract_job_info” and do not wrap in any markdown.`
+Always respond via the function "extract_job_info" and do not wrap in any markdown.`
     },
     {
       role: 'user',
@@ -308,6 +307,7 @@ serve(async (req) => {
               status: extractedData.status || 'applied',
               applied_at: new Date(parseInt(emailData.internalDate)).toISOString(),
               source: 'Gmail Auto-Import',
+              portal: extractedData.portal,
             });
 
           if (!jobError) {

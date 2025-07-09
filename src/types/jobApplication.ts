@@ -1,4 +1,3 @@
-
 export interface JobEntry {
   id: string;
   user_id: string;
@@ -8,6 +7,7 @@ export interface JobEntry {
   status: string;
   applied_at: string;
   updated_at?: string;
+  portal?: string;
 }
 
 export interface EmailEvent {

@@ -53,6 +53,11 @@ export const JobApplicationsList: React.FC<JobApplicationsListProps> = ({
                     Source: {application.source}
                   </p>
                 )}
+                {application.portal && (
+                  <p className="text-sm text-gray-500">
+                    Portal: {application.portal}
+                  </p>
+                )}
               </div>
               
               <div className="flex items-center gap-2">
