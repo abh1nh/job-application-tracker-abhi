@@ -150,6 +150,7 @@ Always respond via the function "extract_job_info" and do not wrap in any markdo
     }
 
     const parsed = JSON.parse(call.arguments)
+    console.log('confidence :'+parsed.confidence);
     const isJobRelated = parsed.isJobRelated && parsed.confidence > 0.7
 
     return {
